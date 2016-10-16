@@ -20,7 +20,7 @@ namespace skellington
 {
     namespace AssimpLoader
     {
-        Skeleton *BuildSkeletonFromAssimpMesh(const aiNode *aiMeshNode, const aiMesh *aiMesh);
+        Skeleton *BuildSkeletonFromAssimpMesh(const aiScene *aiScene, aiMesh *aiMesh);
         Mesh* BuildMeshFromAssimpMesh(const struct aiMesh* aiMesh);
         void CreateVertexGroups(const struct aiMesh *aiMesh, Mesh *mesh);
 
@@ -34,7 +34,31 @@ namespace skellington
             }
         }
 
-        struct aiNode *FindMeshNode(const aiScene *aiScene, aiString meshName);
+
+        aiNode * FindNodeRecursive(aiNode *node, aiString nodeName)
+        {
+            if (node->mName == nodeName) {
+                return node;
+            }
+
+            for (int i=0; i<node->mNumChildren; i++) {
+                auto child = node->mChildren[i];
+                auto foundNode = FindNodeRecursive(child, nodeName);
+                if (foundNode != nullptr) {
+                    return foundNode;
+                }
+            }
+
+            return nullptr;
+        }
+
+        aiNode* FindNode(const aiScene* scene, aiString nodeName)
+        {
+            return FindNodeRecursive(scene->mRootNode, nodeName);
+        }
+
+
+
 
         bool Load(string path, Mesh **meshOut, Skeleton **skeletonOut)
         {
@@ -60,24 +84,15 @@ namespace skellington
             }
             
             const auto aiMesh = aiScene->mMeshes[0];
-            const auto meshNode = FindMeshNode(aiScene, aiMesh->mName);
 
             *meshOut = BuildMeshFromAssimpMesh(aiMesh);
-            *skeletonOut = BuildSkeletonFromAssimpMesh(meshNode, aiMesh);
+            *skeletonOut = BuildSkeletonFromAssimpMesh(aiScene, aiMesh);
             CreateVertexGroups(aiMesh, *meshOut);
 
             return true;
         }
 
-        struct aiNode *FindMeshNode(const aiScene *aiScene, aiString meshName)
-        {
-            for (int i=0; i<aiScene->mRootNode->mNumChildren; i++) {
-                auto node = aiScene->mRootNode->mChildren[i];
 
-            }
-
-            return nullptr;
-        }
 
         vector<Mesh::WeightedVectorIndex> GetWeightedVectorIndices(const aiBone *bone);
         void CreateVertexGroups(const struct aiMesh *aiMesh, Mesh *mesh)
@@ -137,26 +152,31 @@ namespace skellington
         }
 
 
+        void AddBoneToSkeleton(Skeleton *skeleton, const aiBone *bone);
 
-        string AddBoneToSkeleton(Skeleton *skeleton, const aiBone *bone);
-
-        Skeleton *BuildSkeletonFromAssimpMesh(const aiNode *aiMeshNode, const aiMesh *aiMesh)
+        Skeleton *BuildSkeletonFromAssimpMesh(const aiScene *aiScene, aiMesh *aiMesh)
         {
             auto skeleton = new Skeleton();
             for (int i = 0; i < aiMesh->mNumBones; i++) {
                 auto bone = aiMesh->mBones[i];
 
-                auto jointName = AddBoneToSkeleton(skeleton, bone);
-                auto node = aiMeshNode->FindNode(jointName.c_str());
-                fmt::print("node {0} has parent {1}", node->mName, (node->mParent ? node->mParent->mName.C_Str() : "<null>"));
-                //skeleton.SetJointParent(jointName, parentName);
+                AddBoneToSkeleton(skeleton, bone);
+            }
 
+            for (int i=0; i<aiMesh->mNumBones; i++) {
+                auto bone = aiMesh->mBones[i];
+                auto node = FindNode(aiScene, bone->mName);
+                auto parent = node->mParent;
+                if (skeleton->HasJoint(parent->mName.C_Str())) {
+                    fmt::print("node {0} has parent {1}\n", node->mName, node->mParent->mName);
+                    skeleton->SetJointParent(node->mName.C_Str(), parent->mName.C_Str());
+                }
             }
 
             return skeleton;
         }
 
-        string AddBoneToSkeleton(Skeleton *skeleton, const aiBone *bone)
+        void AddBoneToSkeleton(Skeleton *skeleton, const aiBone *bone)
         {
             auto aiFrameMatrix = bone->mOffsetMatrix;
             aiFrameMatrix.Transpose();
@@ -170,7 +190,6 @@ namespace skellington
 
             auto name = bone->mName.C_Str();
             skeleton->AddJoint(Joint(name, Transform(frameMatrix)));
-            return name;
         }
 
 
