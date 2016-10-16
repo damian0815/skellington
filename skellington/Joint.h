@@ -18,16 +18,16 @@ namespace skellington
     class Joint
     {
     public:
-        Joint(string name, const Transform &restTransform) : mName(name), mRestTransform(restTransform) { }
-        Joint(const Joint& other): Joint(other.mName, other.mRestTransform) { }
+        Joint(string name, const Transform &parentRelativeRestTransform) : mName(name), mParentRelativeRestTransform(parentRelativeRestTransform) { }
+        Joint(const Joint& other): Joint(other.mName, other.mParentRelativeRestTransform) { }
 
         const string& GetName() const { return mName; }
-        const Transform& GetTransform() const { return mRestTransform; }
+        const Transform& GetParentRelativeRestTransform() const { return mParentRelativeRestTransform; }
 
     private:
 
         const string mName;
-        const Transform mRestTransform;
+        const Transform mParentRelativeRestTransform;
     };
 
 }

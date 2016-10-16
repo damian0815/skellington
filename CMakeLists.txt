@@ -17,3 +17,7 @@ add_executable(testLoad test/testLoad.cpp test/OpenGLTestUtils.h test/Skellingto
 target_include_directories(testLoad PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(testLoad ${TEST_LIBS})
 add_dependencies(testLoad CopyData)
+
+file(GLOB DATA_FILES "data/*")
+#make_directory(${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/data)
+file(COPY ${DATA_FILES} DESTINATION ${CMAKE_BINARY_DIR}/data)

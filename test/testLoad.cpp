@@ -20,8 +20,8 @@ int main()
         return 1;
     }
 
-    const float CAM_DISTANCE = 3;
-    const float ROTATE_SPEED = 0.1;
+    const float CAM_DISTANCE = 5;
+    const float ROTATE_SPEED = 0.5;
     OpenGLRotatingMainLoop(CAM_DISTANCE, ROTATE_SPEED, [skeleton]() {
 
         DrawSkeleton(skeleton);

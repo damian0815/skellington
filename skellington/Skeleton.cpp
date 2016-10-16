@@ -21,4 +21,46 @@ namespace skellington
 
         mJointParents[joint] = parent;
     }
+
+    bool Skeleton::JointHasParent(const string &jointName)
+    {
+        return mJointParents.count(jointName) != 0;
+    }
+
+    void Skeleton::AddRootJoint(Joint joint)
+    {
+        assert(mRootJointName == "");
+        assert(!HasJoint(joint.GetName()));
+        mRootJointName = joint.GetName();
+        mJoints.push_back(joint);
+    }
+
+    void Skeleton::AddJoint(Joint j, string parentJointName)
+    {
+        assert(!HasJoint(j.GetName()));
+        mJoints.push_back(j);
+        SetJointParent(j.GetName(), parentJointName);
+    }
+
+    Transform Skeleton::GetAbsoluteTransform(const Joint &joint)
+    {
+        vector<Transform> transformStack;
+
+        string jointName = joint.GetName();
+        while(true)
+        {
+            transformStack.push_back(GetJoint(jointName).GetParentRelativeRestTransform());
+            if (!JointHasParent(jointName)) {
+                break;
+            }
+            jointName = GetParentJoint(jointName).GetName();
+        }
+
+        mat4 absoluteTransform;
+        for (const auto& t: transformStack) {
+            absoluteTransform *= t.GetMatrix();
+        }
+        return Transform(absoluteTransform);
+
+    }
 };

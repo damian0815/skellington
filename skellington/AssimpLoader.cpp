@@ -58,8 +58,6 @@ namespace skellington
         }
 
 
-
-
         bool Load(string path, Mesh **meshOut, Skeleton **skeletonOut)
         {
             Assimp::Importer importer;
@@ -152,44 +150,74 @@ namespace skellington
         }
 
 
-        void AddBoneToSkeleton(Skeleton *skeleton, const aiBone *bone);
+        void AddBoneToSkeleton(Skeleton *skeleton, const aiScene *aiScene, const aiMesh *aiMesh, const aiBone *bone);
+
+        const aiBone * FindParentBone(const aiScene *aiScene, const aiMesh *aiMesh, const aiString &boneName);
+        const aiBone * FindBone(const aiMesh *aiMesh, const aiString &boneName);
 
         Skeleton *BuildSkeletonFromAssimpMesh(const aiScene *aiScene, aiMesh *aiMesh)
         {
             auto skeleton = new Skeleton();
+
             for (int i = 0; i < aiMesh->mNumBones; i++) {
                 auto bone = aiMesh->mBones[i];
 
-                AddBoneToSkeleton(skeleton, bone);
-            }
-
-            for (int i=0; i<aiMesh->mNumBones; i++) {
-                auto bone = aiMesh->mBones[i];
-                auto node = FindNode(aiScene, bone->mName);
-                auto parent = node->mParent;
-                if (skeleton->HasJoint(parent->mName.C_Str())) {
-                    fmt::print("node {0} has parent {1}\n", node->mName, node->mParent->mName);
-                    skeleton->SetJointParent(node->mName.C_Str(), parent->mName.C_Str());
-                }
+                AddBoneToSkeleton(skeleton, aiScene, aiMesh, bone);
             }
 
             return skeleton;
         }
 
-        void AddBoneToSkeleton(Skeleton *skeleton, const aiBone *bone)
+        const aiBone * FindParentBone(const aiScene *aiScene, const aiMesh *aiMesh, const aiString &boneName)
         {
-            auto aiFrameMatrix = bone->mOffsetMatrix;
-            aiFrameMatrix.Transpose();
+            auto node = FindNode(aiScene, boneName);
+            auto parentNode = node->mParent;
+            auto parentBone = FindBone(aiMesh, parentNode->mName);
+            return parentBone;
+        }
 
-            glm::mat4 frameMatrix{
-                    aiFrameMatrix.a1, aiFrameMatrix.a2, aiFrameMatrix.a3, aiFrameMatrix.a4,
-                    aiFrameMatrix.b1, aiFrameMatrix.b2, aiFrameMatrix.b3, aiFrameMatrix.b4,
-                    aiFrameMatrix.c1, aiFrameMatrix.c2, aiFrameMatrix.c3, aiFrameMatrix.c4,
-                    aiFrameMatrix.d1, aiFrameMatrix.d2, aiFrameMatrix.d3, aiFrameMatrix.d4,
+
+        void AddBoneToSkeleton(Skeleton *skeleton, const aiScene *aiScene, const aiMesh *aiMesh, const aiBone *bone)
+        {
+            auto node = FindNode(aiScene, bone->mName);
+            auto parentBone = FindParentBone(aiScene, aiMesh, bone->mName);
+
+            auto aiTransformMatrix = node->mTransformation;
+            if (parentBone == nullptr) {
+                auto armatureTransform = node->mParent->mTransformation;
+                aiTransformMatrix = armatureTransform.Inverse() * aiTransformMatrix;
+            }
+
+            aiTransformMatrix.Transpose();
+            glm::mat4 transformMatrix{
+                    aiTransformMatrix.a1, aiTransformMatrix.a2, aiTransformMatrix.a3, aiTransformMatrix.a4,
+                    aiTransformMatrix.b1, aiTransformMatrix.b2, aiTransformMatrix.b3, aiTransformMatrix.b4,
+                    aiTransformMatrix.c1, aiTransformMatrix.c2, aiTransformMatrix.c3, aiTransformMatrix.c4,
+                    aiTransformMatrix.d1, aiTransformMatrix.d2, aiTransformMatrix.d3, aiTransformMatrix.d4,
             };
 
             auto name = bone->mName.C_Str();
-            skeleton->AddJoint(Joint(name, Transform(frameMatrix)));
+            auto joint = Joint(name, Transform(transformMatrix));
+
+            if (parentBone == nullptr) {
+                fmt::print("{0} (root)\n", joint.GetName());
+                skeleton->AddRootJoint(joint);
+
+            } else {
+                fmt::print("{0} (parent {1})\n", joint.GetName(), parentBone->mName.C_Str());
+                skeleton->AddJoint(joint, parentBone->mName.C_Str());
+            }
+
+        }
+
+        const aiBone * FindBone(const aiMesh *aiMesh, const aiString &boneName)
+        {
+            for (int i=0; i<aiMesh->mNumBones; i++) {
+                if (aiMesh->mBones[i]->mName == boneName) {
+                    return aiMesh->mBones[i];
+                }
+            }
+            return nullptr;
         }
 
 
