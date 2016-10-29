@@ -31,6 +31,8 @@ namespace skellington {
         };
         void AddVertexGroup(string name, const vector<WeightedVectorIndex> weightedVertices);
 
+        void DrawWireframe();
+
     private:
         vector<vec3> mVertices;
         vector<int> mTriangles;

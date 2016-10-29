@@ -19,18 +19,23 @@ namespace skellington {
     public:
         void AddJoint(Joint j, string parentJointName);
 
-        const Joint& GetJoint(string name) { return *FindJointWithName(name); }
+        const Joint& GetJoint(string name) const { return *FindJointWithName(name); }
 
         const vector<Joint>& GetJoints() const { return mJoints; }
 
         bool HasJoint(const string &name) const;
-        const Joint & GetParentJoint(const string &joint) { return GetJoint(mJointParents.at(joint)); }
-        bool JointHasParent(const string &jointName);
+        const string& GetParentJointName(const string &joint) const
+            { return mJointParents.at(joint); }
+        const Joint &GetParentJoint(const string &childJointName) const
+            { return GetJoint(GetParentJointName(childJointName)); }
+
+        bool JointHasParent(const string &jointName) const;
 
 
         Transform GetAbsoluteTransform(const Joint &joint);
 
         void SetRootJointName(const std::string &name);
+
 
     private:
         inline vector<Joint>::const_iterator FindJointWithName(const string &name) const { return find_if(mJoints.begin(), mJoints.end(), [&name](const Joint& j) { return name == j.GetName(); }); }

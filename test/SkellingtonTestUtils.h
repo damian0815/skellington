@@ -28,14 +28,9 @@ inline void DrawTransform(const Transform& transform, float length=0.5f)
     DrawLine(pos, zAxis, COLOR_BLUE);
 }
 
-
-
 inline void DrawSkeleton(Skeleton* skeleton)
 {
-    DrawTransform(Transform(vec3(0,0,-1), quat(0,vec3(1,0,0))));
-
     for (const auto& joint: skeleton->GetJoints()) {
-
         const Transform t = skeleton->GetAbsoluteTransform(joint);
         DrawTransform(t);
 
@@ -47,10 +42,20 @@ inline void DrawSkeleton(Skeleton* skeleton)
             auto v2 = parentT*vec3(0,0,0);
             DrawLine(v1, v2, vec4(1.0, 0.8, 0.8, 0.8));
         }
+    }
+}
 
+void DrawPosedSkeleton(Skeleton *skeleton, const Pose &pose)
+{
+    for (const auto& joint: skeleton->GetJoints()) {
+        if (skeleton->JointHasParent(joint.GetName())) {
+            auto t = pose.GetAbsoluteTransform(joint.GetName());
+            auto parentT = pose.GetAbsoluteTransform(skeleton->GetParentJointName(joint.GetName()));
 
-
-
+            auto v1 = t*vec3(0,0,0);
+            auto v2 = parentT*vec3(0,0,0);
+            DrawLine(v1, v2, vec4(1.0, 0.8, 0.8, 0.8));
+        }
     }
 }
 

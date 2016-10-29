@@ -12,6 +12,8 @@ using glm::vec4;
 
 namespace skellington {
 
+    const Transform Transform::IDENTITY;
+
     static mat4 MakeFrameMatrix(const vec3 &translation, const quat &rotation, const vec3 &scale)
     {
         // translate then rotate then scale
@@ -43,5 +45,6 @@ namespace skellington {
         decompose(transform, scale, orientation, translation, skew, perspective);
         orientation = conjugate(orientation);
     }
+
 
 };

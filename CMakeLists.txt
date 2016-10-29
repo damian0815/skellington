@@ -9,14 +9,18 @@ find_library(OPENGL OpenGL)
 find_library(GLFW glfw3)
 set(TEST_LIBS ${OPENGL} ${GLFW} fmt assimp skellington)
 
-set(LIB_SOURCE_FILES skellington/Skeleton.cpp skellington/Skeleton.h skellington/Joint.cpp skellington/Joint.h skellington/Mesh.cpp skellington/Mesh.h skellington/MeshSkeletonAnimator.cpp skellington/MeshSkeletonAnimator.h skellington/Transform.cpp skellington/Transform.h skellington/AssimpLoader.cpp skellington/AssimpLoader.h)
+set(LIB_SOURCE_FILES skellington/Skeleton.cpp skellington/Skeleton.h skellington/Joint.cpp skellington/Joint.h skellington/Mesh.cpp skellington/Mesh.h skellington/Pose.cpp skellington/Pose.h skellington/MeshSkeletonAnimator.cpp skellington/MeshSkeletonAnimator.h skellington/Transform.cpp skellington/Transform.h skellington/AssimpLoader.cpp skellington/AssimpLoader.h)
 add_library(skellington ${LIB_SOURCE_FILES})
 
+function(make_test_app NAME CPPFILE)
+    add_executable(${NAME} ${CPPFILE} test/OpenGLTestUtils.h test/SkellingtonTestUtils.h)
+    target_include_directories(${NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+    target_link_libraries(${NAME} ${TEST_LIBS})
+    add_dependencies(${NAME} CopyData)
+endfunction()
 
-add_executable(testLoad test/testLoad.cpp test/OpenGLTestUtils.h test/SkellingtonTestUtils.h)
-target_include_directories(testLoad PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
-target_link_libraries(testLoad ${TEST_LIBS})
-add_dependencies(testLoad CopyData)
+make_test_app(testLoad test/testLoad.cpp)
+make_test_app(testAnimateLinear test/testAnimateLinear.cpp)
 
 file(GLOB DATA_FILES "data/*")
 #make_directory(${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/data)

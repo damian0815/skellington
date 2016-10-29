@@ -27,7 +27,7 @@ namespace skellington
         mJointParents[joint] = parent;
     }
 
-    bool Skeleton::JointHasParent(const string &jointName)
+    bool Skeleton::JointHasParent(const string &jointName)const
     {
         return mJointParents.count(jointName) != 0;
     }
@@ -50,7 +50,7 @@ namespace skellington
             if (!JointHasParent(jointName)) {
                 break;
             }
-            jointName = GetParentJoint(jointName).GetName();
+            jointName = GetParentJointName(jointName);
         }
 
         mat4 absoluteTransform;
@@ -65,4 +65,5 @@ namespace skellington
     {
         mRootJointName = name;
     }
+
 };

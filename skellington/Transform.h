@@ -6,6 +6,8 @@
 #define SKELLINGTON_FRAME_H
 
 #include <glm/glm.hpp>
+#include <glm/gtc/quaternion.hpp>
+
 using glm::vec3;
 using glm::vec4;
 using glm::quat;
@@ -16,6 +18,11 @@ namespace skellington
     class Transform
     {
     public:
+        static const Transform IDENTITY;
+
+        static const Transform MakeRotation(float angle, const vec3& axis) { return Transform(vec3(0,0,0), glm::angleAxis(angle, axis)); };
+
+        Transform() {}
         Transform(const mat4& transform): mTransform(transform) {};
         Transform(const vec3& translation, const quat& rotation, const vec3& scale=vec3(1,1,1));
 
@@ -26,8 +33,11 @@ namespace skellington
 
         vec3 operator*(const vec3& v) const { auto v4 = mTransform * vec4(v.x, v.y, v.z, 1); return vec3(v4.x/v4.w, v4.y/v4.w, v4.z/v4.w); }
 
+        Transform operator*(const Transform& other) const { return Transform(mTransform * other.mTransform); }
+
+
     private:
-        const mat4 mTransform;
+        mat4 mTransform;
 
     };
 };
