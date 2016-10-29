@@ -30,11 +30,10 @@ namespace skellington {
             { return GetJoint(GetParentJointName(childJointName)); }
 
         bool JointHasParent(const string &jointName) const;
+        Transform GetAbsoluteTransform(const string &jointName)const;
 
-
-        Transform GetAbsoluteTransform(const Joint &joint);
-
-        void SetRootJointName(const std::string &name);
+        void SetRootJointName(const string &name);
+        const string& GetRootJointName() { return mRootJointName; }
 
 
     private:

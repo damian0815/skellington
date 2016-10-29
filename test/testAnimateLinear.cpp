@@ -2,6 +2,7 @@
 
 #include <skellington/Pose.h>
 #include <skellington/AssimpLoader.h>
+#include <skellington/MeshSkeletonAnimator.h>
 
 #include "OpenGLTestUtils.h"
 #include "SkellingtonTestUtils.h"
@@ -25,7 +26,7 @@ int main()
     Pose pose(skeleton);
 
     const vec3 CAM_POS(0, -1, -5);
-    const float ROTATE_SPEED = 0.5;
+    const float ROTATE_SPEED = 0.1;
     float alpha = 0;
     const float ALPHA_SPEED = 0.01f;
 
@@ -33,8 +34,9 @@ int main()
 
         alpha += ALPHA_SPEED;
         Transform curl = Transform::MakeRotation(0.3f*(1.0f + sinf(alpha)), vec3(1,0,0));
-        pose.SetParentRelativeTransformOffset("B", curl);
-        pose.SetParentRelativeTransformOffset("A", curl);
+        pose.SetOffsetTransform("A", curl);
+        pose.SetOffsetTransform("B", curl);
+        pose.SetOffsetTransform("C", curl);
 
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -46,6 +48,9 @@ int main()
 
         glColor4f(1,1,1,0.2f);
         mesh->DrawWireframe();
+
+        auto posedMesh = MeshSkeletonAnimator::ApplyPose(pose, mesh);
+        posedMesh.DrawWireframe();
 
         glPopMatrix();
 

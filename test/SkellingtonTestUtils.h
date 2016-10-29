@@ -31,12 +31,12 @@ inline void DrawTransform(const Transform& transform, float length=0.5f)
 inline void DrawSkeleton(Skeleton* skeleton)
 {
     for (const auto& joint: skeleton->GetJoints()) {
-        const Transform t = skeleton->GetAbsoluteTransform(joint);
+        const Transform t = skeleton->GetAbsoluteTransform(joint.GetName());
         DrawTransform(t);
 
         if (skeleton->JointHasParent(joint.GetName())) {
             const auto& parent = skeleton->GetParentJoint(joint.GetName());
-            const Transform parentT = skeleton->GetAbsoluteTransform(parent);
+            const Transform parentT = skeleton->GetAbsoluteTransform(parent.GetName());
 
             auto v1 = t*vec3(0,0,0);
             auto v2 = parentT*vec3(0,0,0);

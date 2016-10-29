@@ -21,16 +21,22 @@ namespace skellington
     public:
         Pose(const Skeleton* skeleton) : mSkeleton(skeleton) {}
 
-        void SetParentRelativeTransformOffset(const string& jointName, const Transform& transformOffset);
+        const Skeleton* const GetSkeleton() const { return mSkeleton; }
 
-        Transform GetAbsoluteTransform(const string &jointName)const;
+        // in joint space
+        void SetOffsetTransform(const string &jointName, const Transform &transformOffset);
+        const Transform& GetOffsetTransform(const string &jointName) const;
+
+        // in parent joint space
+        Transform GetParentRelativeTransform(const string& jointName) const;
+        // in 'world' space
+        Transform GetAbsoluteTransform(const string &jointName) const;
 
     private:
         const Skeleton* mSkeleton;
 
         map<string, Transform> mJointOffsetTransforms;
 
-        const Transform& GetJointOffsetTransform(const string &jointName) const;
     };
 
 }

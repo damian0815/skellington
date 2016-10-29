@@ -6,9 +6,14 @@
 
 namespace skellington
 {
-    void Pose::SetParentRelativeTransformOffset(const string &jointName, const Transform &transformOffset)
+    void Pose::SetOffsetTransform(const string &jointName, const Transform &transformOffset)
     {
         mJointOffsetTransforms[jointName] = transformOffset;
+    }
+
+    Transform Pose::GetParentRelativeTransform(const string &jointName) const
+    {
+       return mSkeleton->GetJoint(jointName).GetParentRelativeRestTransform() * GetOffsetTransform(jointName);
     }
 
     Transform Pose::GetAbsoluteTransform(const string &jointName)const
@@ -18,10 +23,10 @@ namespace skellington
             parentTransform = GetAbsoluteTransform(mSkeleton->GetParentJointName(jointName));
         }
 
-        return parentTransform * mSkeleton->GetJoint(jointName).GetParentRelativeRestTransform() * GetJointOffsetTransform(jointName);
+        return parentTransform * GetParentRelativeTransform(jointName);
     }
 
-    const Transform &Pose::GetJointOffsetTransform(const string &jointName) const
+    const Transform &Pose::GetOffsetTransform(const string &jointName) const
     {
         if (mJointOffsetTransforms.count(jointName)) {
             return mJointOffsetTransforms.at(jointName);

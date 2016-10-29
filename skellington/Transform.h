@@ -20,7 +20,8 @@ namespace skellington
     public:
         static const Transform IDENTITY;
 
-        static const Transform MakeRotation(float angle, const vec3& axis) { return Transform(vec3(0,0,0), glm::angleAxis(angle, axis)); };
+        static Transform MakeRotation(float angle, const vec3& axis) { return Transform(vec3(0,0,0), glm::angleAxis(angle, axis)); };
+        static Transform MakeTranslation(const vec3 &translation) { return Transform(translation, glm::quat()); }
 
         Transform() {}
         Transform(const mat4& transform): mTransform(transform) {};
@@ -34,6 +35,7 @@ namespace skellington
         vec3 operator*(const vec3& v) const { auto v4 = mTransform * vec4(v.x, v.y, v.z, 1); return vec3(v4.x/v4.w, v4.y/v4.w, v4.z/v4.w); }
 
         Transform operator*(const Transform& other) const { return Transform(mTransform * other.mTransform); }
+
 
 
     private:

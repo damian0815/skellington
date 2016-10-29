@@ -33,6 +33,10 @@ namespace skellington {
 
         void DrawWireframe();
 
+        const vector<vec3>& GetVertices() const { return mVertices; }
+        const map<string, vector<WeightedVectorIndex>>& GetVertexGroups() const { return mVertexGroups; }
+        const vector<int>& GetTriangles() const { return mTriangles; }
+
     private:
         vector<vec3> mVertices;
         vector<int> mTriangles;

@@ -39,18 +39,18 @@ namespace skellington
         SetJointParent(j.GetName(), parentJointName);
     }
 
-    Transform Skeleton::GetAbsoluteTransform(const Joint &joint)
+    Transform Skeleton::GetAbsoluteTransform(const string& jointName) const
     {
         std::deque<Transform> transformStack;
 
-        string jointName = joint.GetName();
+        string currentJointName = jointName;
         while(true)
         {
-            transformStack.push_front(GetJoint(jointName).GetParentRelativeRestTransform());
-            if (!JointHasParent(jointName)) {
+            transformStack.push_front(GetJoint(currentJointName).GetParentRelativeRestTransform());
+            if (!JointHasParent(currentJointName)) {
                 break;
             }
-            jointName = GetParentJointName(jointName);
+            currentJointName = GetParentJointName(currentJointName);
         }
 
         mat4 absoluteTransform;

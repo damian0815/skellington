@@ -7,12 +7,13 @@
 
 #include "Mesh.h"
 #include "Skeleton.h"
+#include "Pose.h"
 
 namespace skellington {
 
     namespace MeshSkeletonAnimator
     {
-        void Animate(const Skeleton* skeleton, const Mesh* meshRest, Mesh* meshResult);
+        Mesh ApplyPose(const Pose &pose, const Mesh *meshRest);
 
     };
 
