@@ -21,6 +21,8 @@ namespace skellington
 
     namespace OptimizedCoRComputer
     {
+        typedef vector<float> BoneWeightMap;
+
         struct TriangleIndices
         {
             int alpha, beta, gamma;
@@ -32,12 +34,11 @@ namespace skellington
         };
 
         bool
-        ComputeOptimizedCoR(int vertexIndex, const vector<vec3> &vertices, const vector<TriangleIndices> &triangles, const vector<map<string, float>> &boneWeights, vec3 &corOut);
+        ComputeOptimizedCoR(int vertexIndex, const vector<vec3> &vertices, const vector<TriangleIndices> &triangles, const vector<BoneWeightMap> &boneWeights, vec3 &corOut);
 
 
         map<int, vec3> ComputeOptimizedCoRs(skellington::Mesh *mesh, skellington::Skeleton *skeleton)
         {
-
             vector<TriangleIndices> triangles(mesh->GetTriangles().size());
             for (int triangleIndex=0; triangleIndex<mesh->GetTriangles().size()/3; triangleIndex++) {
                 triangles[triangleIndex].alpha = mesh->GetTriangles()[triangleIndex*3+0];
@@ -45,13 +46,16 @@ namespace skellington
                 triangles[triangleIndex].gamma = mesh->GetTriangles()[triangleIndex*3+2];
             }
 
-            vector<map<string, float>> boneWeights(mesh->GetVertices().size());
+            vector<BoneWeightMap> boneWeights;
+            boneWeights.assign(mesh->GetVertices().size(), BoneWeightMap(skeleton->GetJoints().size()));
+            int boneIndex = 0;
             for (const auto& j: skeleton->GetJoints()) {
                 const auto& jointName = j.GetName();
                 const auto& group = mesh->GetVertexGroups().at(jointName);
                 for (const auto& wv: group) {
-                    boneWeights[wv.mVertexIndex][jointName] = wv.mWeight;
+                    boneWeights.at(wv.mVertexIndex).at(boneIndex) = wv.mWeight;
                 }
+                ++boneIndex;
             }
 
             map<int, vec3> results;
@@ -68,27 +72,27 @@ namespace skellington
         }
 
 
-        float ComputeSimilarity(const map<string, float> &wP, const map<string, float> &wV)
+        float ComputeL2SkinningWeightDistance(const BoneWeightMap &wP, const BoneWeightMap & wV)
+        {
+            float distanceSq = 0;
+            for (int i=0; i<wP.size(); i++) {
+                distanceSq += std::pow(wP[i] - wV[i], 2);
+            }
+            return std::sqrt(distanceSq);
+        }
+
+        float ComputeSimilarity(const BoneWeightMap &wP, const BoneWeightMap &wV)
         {
             // sigma = width of exponential kernel in eq.1
             const float sigma = 0.1f;
             float similarity = 0;
             const float sigmaSq = sigma*sigma;
 
-            for (const auto& jt: wP) {
-                for (const auto &kt: wV) {
-                    const auto& j = jt.first;
-                    const auto& k = kt.first;
-                    if (j == k) {
+            for (int j=0; j<wP.size(); j++) {
+                for (int k=0; k<wV.size(); k++) {
+                    if (j==k) {
                         continue;
                     }
-                    if (wP.count(k) == 0) {
-                        continue;
-                    }
-                    if (wV.count(j) == 0) {
-                        continue;
-                    }
-
                     auto wPj = wP.at(j);
                     auto wPk = wP.at(k);
                     auto wVj = wV.at(j);
@@ -111,23 +115,23 @@ namespace skellington
             return 0.5f * glm::length(glm::cross(u, v));
         }
 
-        map<string, float> ComputeTriangleAverageWeights(const vector<map<string, float>>& boneWeights, const TriangleIndices &triangle)
+        BoneWeightMap ComputeTriangleAverageWeights(const vector<BoneWeightMap>& boneWeights, const TriangleIndices &triangle)
         {
-            map<string, float> result;
-            for (const auto i: {triangle.alpha, triangle.beta, triangle.gamma}) {
-                for (const auto& w: boneWeights[i]) {
-                    result[w.first] += w.second;
+            BoneWeightMap result(boneWeights.at(0).size());
+            for (const auto vertexIndex: {triangle.alpha, triangle.beta, triangle.gamma}) {
+                for (int j=0; j<boneWeights.at(vertexIndex).size(); j++) {
+                    result.at(j) += boneWeights.at(vertexIndex).at(j);
                 }
             }
             const float ONE_THIRD = 1.0f/3.0f;
             for (auto& w: result) {
-                w.second *= ONE_THIRD;
+                w *= ONE_THIRD;
             }
             return result;
         }
 
         bool
-        ComputeOptimizedCoR(int vertexIndex, const vector<vec3> &vertices, const vector<TriangleIndices> &triangles, const vector<map<string, float>> &boneWeights, vec3 &corOut)
+        ComputeOptimizedCoR(int vertexIndex, const vector<vec3> &vertices, const vector<TriangleIndices> &triangles, const vector<BoneWeightMap> &boneWeights, vec3 &corOut)
         {
             float totalWeight = 0;
             vec3 posAccumulator;
@@ -136,7 +140,7 @@ namespace skellington
 
                 TriangleNodes tNodes{vertices[t.alpha], vertices[t.beta], vertices[t.gamma]};
 
-                const auto& wI = boneWeights[vertexIndex];
+                const auto& wI = boneWeights.at(vertexIndex);
                 const auto& wTriangleAverage = ComputeTriangleAverageWeights(boneWeights, t);
 
                 const auto similarity = ComputeSimilarity(wI, wTriangleAverage);
