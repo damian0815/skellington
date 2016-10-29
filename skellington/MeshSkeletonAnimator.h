@@ -13,7 +13,7 @@ namespace skellington {
 
     namespace MeshSkeletonAnimator
     {
-        Mesh ApplyPose(const Pose &pose, const Mesh *meshRest);
+        Mesh ApplyPose_Linear(const Pose &pose, const Mesh *meshRest);
 
     };
 

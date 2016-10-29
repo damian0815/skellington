@@ -3,6 +3,7 @@
 #include <skellington/Pose.h>
 #include <skellington/AssimpLoader.h>
 #include <skellington/MeshSkeletonAnimator.h>
+#include <skellington/OptimizedCoRComputer.h>
 
 #include "OpenGLTestUtils.h"
 #include "SkellingtonTestUtils.h"
@@ -22,6 +23,9 @@ int main()
     if (!loaded) {
         return 1;
     }
+
+    auto optimizedCoRs = OptimizedCoRComputer::ComputeOptimizedCoRs(mesh, skeleton);
+
 
     Pose pose(skeleton);
 
@@ -44,11 +48,19 @@ int main()
         glPushMatrix();
 
         glRotatef(-90, 1, 0, 0);
-        DrawPosedSkeleton(skeleton, pose);
+        //DrawPosedSkeleton(skeleton, pose);
 
         glColor4f(1,1,1,0.2f);
-        auto posedMesh = MeshSkeletonAnimator::ApplyPose_Linear(pose, mesh);
-        posedMesh.DrawWireframe();
+        vec4 optimizedCoRColor(1, 0.2f, 0.2f, 0.3f);
+        mesh->DrawWireframe();
+        for (const auto it: optimizedCoRs) {
+            auto v1 = mesh->GetVertices()[it.first];
+            auto v2 = it.second;
+            DrawLine(v1, v2, optimizedCoRColor);
+        }
+
+        //auto posedMesh = MeshSkeletonAnimator::ApplyPose_Linear(pose, mesh);
+        //posedMesh.DrawWireframe();
 
         glPopMatrix();
 
@@ -56,5 +68,4 @@ int main()
 
     return 0;
 }
-
 

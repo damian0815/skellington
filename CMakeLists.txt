@@ -9,7 +9,7 @@ find_library(OPENGL OpenGL)
 find_library(GLFW glfw3)
 set(TEST_LIBS ${OPENGL} ${GLFW} fmt assimp skellington)
 
-set(LIB_SOURCE_FILES skellington/Skeleton.cpp skellington/Skeleton.h skellington/Joint.cpp skellington/Joint.h skellington/Mesh.cpp skellington/Mesh.h skellington/Pose.cpp skellington/Pose.h skellington/MeshSkeletonAnimator.cpp skellington/MeshSkeletonAnimator.h skellington/Transform.cpp skellington/Transform.h skellington/AssimpLoader.cpp skellington/AssimpLoader.h)
+set(LIB_SOURCE_FILES skellington/Skeleton.cpp skellington/Skeleton.h skellington/Joint.cpp skellington/Joint.h skellington/Mesh.cpp skellington/Mesh.h skellington/Pose.cpp skellington/Pose.h skellington/MeshSkeletonAnimator.cpp skellington/MeshSkeletonAnimator.h skellington/Transform.cpp skellington/Transform.h skellington/AssimpLoader.cpp skellington/AssimpLoader.h skellington/OptimizedCoRComputer.cpp skellington/OptimizedCoRComputer.h)
 add_library(skellington ${LIB_SOURCE_FILES})
 
 function(make_test_app NAME CPPFILE)
@@ -21,6 +21,7 @@ endfunction()
 
 make_test_app(testLoad test/testLoad.cpp)
 make_test_app(testAnimateLinear test/testAnimateLinear.cpp)
+make_test_app(testOptimizedCentersOfRotation test/testOptimizedCentersOfRotation.cpp)
 
 file(GLOB DATA_FILES "data/*")
 #make_directory(${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/data)

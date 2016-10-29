@@ -9,7 +9,7 @@ namespace skellington
 {
     namespace MeshSkeletonAnimator
     {
-        Mesh ApplyPose(const Pose &pose, const Mesh *meshRest)
+        Mesh ApplyPose_Linear(const Pose &pose, const Mesh *meshRest)
         {
             vector<vec3> posedVertices(meshRest->GetVertices().size());
             const auto& skeleton = *pose.GetSkeleton();
