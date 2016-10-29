@@ -10,6 +10,7 @@
 #include <assimp/postprocess.h>
 #include <fmt/ostream.h>
 #include <iostream>
+#include <deque>
 
 std::ostream& operator<<(std::ostream& o, const aiString& str)
 {
@@ -20,7 +21,7 @@ namespace skellington
 {
     namespace AssimpLoader
     {
-        Skeleton *BuildSkeletonFromAssimpMesh(const aiScene *aiScene, aiMesh *aiMesh);
+        Skeleton *BuildSkeletonFromAssimpNodeTree(aiNode *skeletonRootNode);
         Mesh* BuildMeshFromAssimpMesh(const struct aiMesh* aiMesh);
         void CreateVertexGroups(const struct aiMesh *aiMesh, Mesh *mesh);
 
@@ -83,8 +84,9 @@ namespace skellington
             
             const auto aiMesh = aiScene->mMeshes[0];
 
+            const string SKELETON_NODE_NAME = "Armature";
             *meshOut = BuildMeshFromAssimpMesh(aiMesh);
-            *skeletonOut = BuildSkeletonFromAssimpMesh(aiScene, aiMesh);
+            *skeletonOut = BuildSkeletonFromAssimpNodeTree(FindNode(aiScene, aiString(SKELETON_NODE_NAME)));
             CreateVertexGroups(aiMesh, *meshOut);
 
             return true;
@@ -150,74 +152,47 @@ namespace skellington
         }
 
 
-        void AddBoneToSkeleton(Skeleton *skeleton, const aiScene *aiScene, const aiMesh *aiMesh, const aiBone *bone);
+        void AddBoneToSkeleton(Skeleton *skeleton, aiString parentBoneName, aiNode *node);
+        glm::mat4 GetGLMTransformFromAITransform(aiMatrix4x4 aiTransform);
 
-        const aiBone * FindParentBone(const aiScene *aiScene, const aiMesh *aiMesh, const aiString &boneName);
-        const aiBone * FindBone(const aiMesh *aiMesh, const aiString &boneName);
-
-        Skeleton *BuildSkeletonFromAssimpMesh(const aiScene *aiScene, aiMesh *aiMesh)
+        Skeleton *BuildSkeletonFromAssimpNodeTree(aiNode *skeletonRootNode)
         {
             auto skeleton = new Skeleton();
 
-            for (int i = 0; i < aiMesh->mNumBones; i++) {
-                auto bone = aiMesh->mBones[i];
+            std::deque<aiNode*> nodes;
+            nodes.push_back(skeletonRootNode);
+            skeleton->SetRootJointName(skeletonRootNode->mName.C_Str());
 
-                AddBoneToSkeleton(skeleton, aiScene, aiMesh, bone);
+            while (!nodes.empty()) {
+                auto parent = nodes.front();
+                nodes.pop_front();
+                for (int i=0; i<parent->mNumChildren; i++) {
+                    auto child = parent->mChildren[i];
+                    AddBoneToSkeleton(skeleton, parent->mName, child);
+                    nodes.push_back(child);
+                }
             }
 
             return skeleton;
         }
 
-        const aiBone * FindParentBone(const aiScene *aiScene, const aiMesh *aiMesh, const aiString &boneName)
+        void AddBoneToSkeleton(Skeleton *skeleton, aiString parentBoneName, aiNode *node)
         {
-            auto node = FindNode(aiScene, boneName);
-            auto parentNode = node->mParent;
-            auto parentBone = FindBone(aiMesh, parentNode->mName);
-            return parentBone;
+            auto transform = GetGLMTransformFromAITransform(node->mTransformation);
+            Joint j(node->mName.C_Str(), transform);
+            skeleton->AddJoint(j, parentBoneName.C_Str());
         }
 
-
-        void AddBoneToSkeleton(Skeleton *skeleton, const aiScene *aiScene, const aiMesh *aiMesh, const aiBone *bone)
+        glm::mat4 GetGLMTransformFromAITransform(aiMatrix4x4 aiTransform)
         {
-            auto node = FindNode(aiScene, bone->mName);
-            auto parentBone = FindParentBone(aiScene, aiMesh, bone->mName);
-
-            auto aiTransformMatrix = node->mTransformation;
-            if (parentBone == nullptr) {
-                auto armatureTransform = node->mParent->mTransformation;
-                aiTransformMatrix = armatureTransform.Inverse() * aiTransformMatrix;
-            }
-
-            aiTransformMatrix.Transpose();
-            glm::mat4 transformMatrix{
-                    aiTransformMatrix.a1, aiTransformMatrix.a2, aiTransformMatrix.a3, aiTransformMatrix.a4,
-                    aiTransformMatrix.b1, aiTransformMatrix.b2, aiTransformMatrix.b3, aiTransformMatrix.b4,
-                    aiTransformMatrix.c1, aiTransformMatrix.c2, aiTransformMatrix.c3, aiTransformMatrix.c4,
-                    aiTransformMatrix.d1, aiTransformMatrix.d2, aiTransformMatrix.d3, aiTransformMatrix.d4,
+            aiTransform.Transpose();
+            mat4 glmTransform{
+                    aiTransform.a1, aiTransform.a2, aiTransform.a3, aiTransform.a4,
+                    aiTransform.b1, aiTransform.b2, aiTransform.b3, aiTransform.b4,
+                    aiTransform.c1, aiTransform.c2, aiTransform.c3, aiTransform.c4,
+                    aiTransform.d1, aiTransform.d2, aiTransform.d3, aiTransform.d4,
             };
-
-            auto name = bone->mName.C_Str();
-            auto joint = Joint(name, Transform(transformMatrix));
-
-            if (parentBone == nullptr) {
-                fmt::print("{0} (root)\n", joint.GetName());
-                skeleton->AddRootJoint(joint);
-
-            } else {
-                fmt::print("{0} (parent {1})\n", joint.GetName(), parentBone->mName.C_Str());
-                skeleton->AddJoint(joint, parentBone->mName.C_Str());
-            }
-
-        }
-
-        const aiBone * FindBone(const aiMesh *aiMesh, const aiString &boneName)
-        {
-            for (int i=0; i<aiMesh->mNumBones; i++) {
-                if (aiMesh->mBones[i]->mName == boneName) {
-                    return aiMesh->mBones[i];
-                }
-            }
-            return nullptr;
+            return glmTransform;
         }
 
 

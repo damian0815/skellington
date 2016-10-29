@@ -20,10 +20,14 @@ int main()
         return 1;
     }
 
-    const float CAM_DISTANCE = 5;
-    const float ROTATE_SPEED = 0.5;
-    OpenGLRotatingMainLoop(CAM_DISTANCE, ROTATE_SPEED, [skeleton]() {
+    for (const auto& j: skeleton->GetJoints()) {
+        fmt::print("skeleton joint {0} has transform {1} (global {2})\n", j.GetName(), j.GetParentRelativeRestTransform().GetMatrix(), skeleton->GetAbsoluteTransform(j).GetMatrix());
+    }
 
+    const vec3 CAM_POS(0, -1, -5);
+    const float ROTATE_SPEED = 0.5;
+    OpenGLRotatingMainLoop(CAM_POS, ROTATE_SPEED, [skeleton]() {
+        glRotatef(-90, 1, 0, 0);
         DrawSkeleton(skeleton);
 
     });

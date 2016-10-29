@@ -24,7 +24,7 @@ namespace skellington
 
         static void Decompose(const mat4 &transform, vec3 &translateOut, quat &rotateOut, vec3 &scaleOut);
 
-        vec3 operator*(const vec3& v) const { vec4 v4(v.x, v.y, v.z, 1); v4 = mTransform * v4; v4 *= 1.0f/v4.w; return vec3(v4.x, v4.y, v4.z); }
+        vec3 operator*(const vec3& v) const { auto v4 = mTransform * vec4(v.x, v.y, v.z, 1); return vec3(v4.x/v4.w, v4.y/v4.w, v4.z/v4.w); }
 
     private:
         const mat4 mTransform;

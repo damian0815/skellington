@@ -2,6 +2,7 @@
 // Created by Damian Stewart on 15/10/16.
 //
 
+#include <deque>
 #include "Skeleton.h"
 
 namespace skellington
@@ -16,6 +17,10 @@ namespace skellington
 
     void Skeleton::SetJointParent(const string &joint, const string &parent)
     {
+        if (parent == mRootJointName) {
+            return;
+        }
+
         assert(HasJoint(joint) && HasJoint(parent));
         assert(mJointParents.count(joint) == 0);
 
@@ -27,14 +32,6 @@ namespace skellington
         return mJointParents.count(jointName) != 0;
     }
 
-    void Skeleton::AddRootJoint(Joint joint)
-    {
-        assert(mRootJointName == "");
-        assert(!HasJoint(joint.GetName()));
-        mRootJointName = joint.GetName();
-        mJoints.push_back(joint);
-    }
-
     void Skeleton::AddJoint(Joint j, string parentJointName)
     {
         assert(!HasJoint(j.GetName()));
@@ -44,12 +41,12 @@ namespace skellington
 
     Transform Skeleton::GetAbsoluteTransform(const Joint &joint)
     {
-        vector<Transform> transformStack;
+        std::deque<Transform> transformStack;
 
         string jointName = joint.GetName();
         while(true)
         {
-            transformStack.push_back(GetJoint(jointName).GetParentRelativeRestTransform());
+            transformStack.push_front(GetJoint(jointName).GetParentRelativeRestTransform());
             if (!JointHasParent(jointName)) {
                 break;
             }
@@ -58,9 +55,14 @@ namespace skellington
 
         mat4 absoluteTransform;
         for (const auto& t: transformStack) {
-            absoluteTransform *= t.GetMatrix();
+            absoluteTransform = absoluteTransform * t.GetMatrix();
         }
         return Transform(absoluteTransform);
 
+    }
+
+    void Skeleton::SetRootJointName(const string &name)
+    {
+        mRootJointName = name;
     }
 };

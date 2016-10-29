@@ -8,22 +8,36 @@
 #include "OpenGLTestUtils.h"
 #include "skellington/Skeleton.h"
 #include <fmt/ostream.h>
+#include <glm/gtc/quaternion.hpp>
 
 using namespace skellington;
 
+static const vec3 AXIS_X(1,0,0);
+static const vec3 AXIS_Y(0,1,0);
+static const vec3 AXIS_Z(0,0,1);
+
+inline void DrawTransform(const Transform& transform, float length=0.5f)
+{
+    auto pos = transform*vec3(0,0,0);
+
+    auto xAxis = transform*(AXIS_X*length);
+    auto yAxis = transform*(AXIS_Y*length);
+    auto zAxis = transform*(AXIS_Z*length);
+    DrawLine(pos, xAxis, COLOR_RED);
+    DrawLine(pos, yAxis, COLOR_GREEN);
+    DrawLine(pos, zAxis, COLOR_BLUE);
+}
+
+
+
 inline void DrawSkeleton(Skeleton* skeleton)
 {
-    vec3 pos;
-
-
+    DrawTransform(Transform(vec3(0,0,-1), quat(0,vec3(1,0,0))));
 
     for (const auto& joint: skeleton->GetJoints()) {
 
         const Transform t = skeleton->GetAbsoluteTransform(joint);
-
-        auto origin = t*vec3(0,0,0);
-        auto forward = t*(vec3(0,0,1)*0.5f);
-        DrawLine(origin, forward, vec4(0.3, 1.0, 0.3, 0.8));
+        DrawTransform(t);
 
         if (skeleton->JointHasParent(joint.GetName())) {
             const auto& parent = skeleton->GetParentJoint(joint.GetName());

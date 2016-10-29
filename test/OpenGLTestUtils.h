@@ -25,6 +25,10 @@ using std::cerr;
 using std::cout;
 using std::endl;
 
+static const vec4 COLOR_RED(1,0,0,1);
+static const vec4 COLOR_GREEN(0,1,0,1);
+static const vec4 COLOR_BLUE(0,0,1,1);
+
 inline float RandomFloat(float min=0, float max=1) {
     return min + (max-min) * float(arc4random())/std::numeric_limits<uint32_t>::max();
 }
@@ -135,22 +139,38 @@ inline void OpenGLMainLoop(std::function<void(void)> frameFunction) {
     }
 }
 
-inline void OpenGLRotatingMainLoop(float camDistance, float rotateSpeed, std::function<void(void)> frameFunction)
+
+inline void OpenGLRotatingMainLoop(vec3 camPos, float rotateSpeed, std::function<void(void)> frameFunction)
 {
     float camAngle = 0;
     OpenGLMainLoop([&]() {
         camAngle += rotateSpeed;
 
-        glTranslatef(0, 0, -camDistance);
+        glTranslatef(camPos);
 
         glRotatef(camAngle, 0, 1, 0);
         frameFunction();
     });
 }
 
+inline void OpenGLRotatingMainLoop(float camDistance, float rotateSpeed, std::function<void(void)> frameFunction)
+{
+    OpenGLRotatingMainLoop(vec3(0, 0, -camDistance), rotateSpeed, frameFunction);
+}
+
 inline std::ostream &operator<<(std::ostream &os, const vec3 &v)
 {
     return os << "(" << v.x << "," << v.y << "," << v.z << ")";
+}
+
+inline std::ostream &operator<<(std::ostream &os, const vec4 &v)
+{
+    return os << "(" << v.x << "," << v.y << "," << v.z << "," << v.w << ")";
+}
+
+inline std::ostream &operator<<(std::ostream& os, const mat4 &m)
+{
+    return os << "[" << m[0] << "," << m[1] << "," << m[2] << "," << m[3] << "]";
 }
 
 #endif //SKELLINGTON_OPENGLTESTUTILS_H_H
