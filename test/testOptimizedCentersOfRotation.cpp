@@ -37,7 +37,7 @@ int main()
     OpenGLRotatingMainLoop(CAM_POS, ROTATE_SPEED, [&]() {
 
         alpha += ALPHA_SPEED;
-        Transform curl = Transform::MakeRotation(float(M_PI_4)*(1.0f - cosf(alpha/2)), vec3(1,0,0));
+        Transform curl = Transform::MakeRotation(float(M_PI_4)*(1.0f - cosf(alpha/2)), vec3(0,0,1));
         Transform twist = Transform::MakeRotation(float(M_PI)*(1.0f - cosf(alpha/7)), vec3(0,1,0));
         pose.SetOffsetTransform("A", curl);
         pose.SetOffsetTransform("B", curl*twist);
@@ -48,19 +48,20 @@ int main()
         glPushMatrix();
 
         glRotatef(-90, 1, 0, 0);
-        //DrawPosedSkeleton(skeleton, pose);
+        DrawPosedSkeleton(skeleton, pose);
 
         glColor4f(1,1,1,0.2f);
         vec4 optimizedCoRColor(1, 0.2f, 0.2f, 0.3f);
-        mesh->DrawWireframe();
+        //mesh->DrawWireframe();
         for (const auto it: optimizedCoRs) {
             auto v1 = mesh->GetVertices()[it.first];
             auto v2 = it.second;
             DrawLine(v1, v2, optimizedCoRColor);
         }
 
-        //auto posedMesh = MeshSkeletonAnimator::ApplyPose_Linear(pose, mesh);
-        //posedMesh.DrawWireframe();
+        glColor4f(1,1,1,0.2f);
+        auto posedMesh = MeshSkeletonAnimator::ApplyPose_OptimizedCoR(pose, mesh, optimizedCoRs);
+        posedMesh.DrawWireframe();
 
         glPopMatrix();
 

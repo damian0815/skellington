@@ -15,6 +15,8 @@ namespace skellington {
     {
         Mesh ApplyPose_Linear(const Pose &pose, const Mesh *meshRest);
 
+        Mesh ApplyPose_OptimizedCoR(const Pose &pose, const Mesh *meshRest, const map<int, vec3> optimizedCoMs);
+
     };
 
 };

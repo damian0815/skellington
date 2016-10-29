@@ -37,13 +37,10 @@ namespace skellington {
 
     void Transform::Decompose(const mat4 &transform, vec3 &translateOut, quat &rotateOut, vec3 &scaleOut)
     {
-        vec3 scale;
-        quat orientation;
-        vec3 translation;
         vec3 skew;
         vec4 perspective;
-        decompose(transform, scale, orientation, translation, skew, perspective);
-        orientation = conjugate(orientation);
+        decompose(transform, scaleOut, rotateOut, translateOut, skew, perspective);
+        rotateOut = conjugate(rotateOut);
     }
 
 
