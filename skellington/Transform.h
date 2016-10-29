@@ -30,6 +30,8 @@ namespace skellington
         const mat4& GetMatrix() const { return mTransform; }
         vec3 GetTranslationComponent() const;
 
+        Transform GetInverse() const { return Transform(glm::inverse(GetMatrix())); }
+
         static void Decompose(const mat4 &transform, vec3 &translateOut, quat &rotateOut, vec3 &scaleOut);
 
         vec3 operator*(const vec3& v) const { auto v4 = mTransform * vec4(v.x, v.y, v.z, 1); return vec3(v4.x/v4.w, v4.y/v4.w, v4.z/v4.w); }

@@ -33,9 +33,10 @@ int main()
     OpenGLRotatingMainLoop(CAM_POS, ROTATE_SPEED, [&]() {
 
         alpha += ALPHA_SPEED;
-        Transform curl = Transform::MakeRotation(0.3f*(1.0f + sinf(alpha)), vec3(1,0,0));
+        Transform curl = Transform::MakeRotation(float(M_PI_4)*(1.0f - cosf(alpha/2)), vec3(1,0,0));
+        Transform twist = Transform::MakeRotation(float(M_PI)*(1.0f - cosf(alpha/7)), vec3(0,1,0));
         pose.SetOffsetTransform("A", curl);
-        pose.SetOffsetTransform("B", curl);
+        pose.SetOffsetTransform("B", curl*twist);
         pose.SetOffsetTransform("C", curl);
 
         glEnable(GL_BLEND);
@@ -43,12 +44,9 @@ int main()
         glPushMatrix();
 
         glRotatef(-90, 1, 0, 0);
-        DrawSkeleton(skeleton);
         DrawPosedSkeleton(skeleton, pose);
 
         glColor4f(1,1,1,0.2f);
-        mesh->DrawWireframe();
-
         auto posedMesh = MeshSkeletonAnimator::ApplyPose(pose, mesh);
         posedMesh.DrawWireframe();
 

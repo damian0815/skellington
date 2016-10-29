@@ -48,6 +48,9 @@ inline void DrawSkeleton(Skeleton* skeleton)
 void DrawPosedSkeleton(Skeleton *skeleton, const Pose &pose)
 {
     for (const auto& joint: skeleton->GetJoints()) {
+        const Transform t = pose.GetAbsoluteTransform(joint.GetName());
+        DrawTransform(t);
+
         if (skeleton->JointHasParent(joint.GetName())) {
             auto t = pose.GetAbsoluteTransform(joint.GetName());
             auto parentT = pose.GetAbsoluteTransform(skeleton->GetParentJointName(joint.GetName()));
