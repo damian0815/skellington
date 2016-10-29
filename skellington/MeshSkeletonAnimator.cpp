@@ -44,12 +44,8 @@ namespace skellington
             for (const auto& j: skeleton.GetJoints()) {
                 const auto poseTransform = pose.GetAbsoluteTransform(j.GetName());
 
-                vec3 translation, scale;
-                quat rotation;
-                poseTransform.Decompose(translation, rotation, scale);
-
-                unitRotationQuats[j.GetName()] = /*glm::normalize(rotation)*/rotation;
-                translations[j.GetName()] = translation;
+                unitRotationQuats[j.GetName()] = poseTransform.GetRotation();
+                translations[j.GetName()] = poseTransform.GetTranslation();
 
                 inverseRestTransforms[j.GetName()] = skeleton.GetAbsoluteTransform(j.GetName()).GetInverse();
             }

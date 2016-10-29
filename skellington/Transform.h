@@ -12,6 +12,7 @@ using glm::vec3;
 using glm::vec4;
 using glm::quat;
 using glm::mat4;
+using glm::mat3;
 
 namespace skellington
 {
@@ -21,29 +22,28 @@ namespace skellington
         static const Transform IDENTITY;
 
         static Transform MakeRotation(float angle, const vec3& axis) { return Transform(vec3(0,0,0), glm::angleAxis(angle, axis)); };
-        static Transform MakeTranslation(const vec3 &translation) { return Transform(translation, glm::quat()); }
 
         Transform() {}
-        Transform(const mat4& transform): mTransform(transform) {};
-        Transform(const vec3& translation, const quat& rotation, const vec3& scale=vec3(1,1,1));
+        Transform(const mat4& transform);
+        Transform(const vec3& translation, const quat& rotation) : mRotation(rotation), mTranslation(translation) {};
 
-        const mat4& GetMatrix() const { return mTransform; }
-        vec3 GetTranslationComponent() const;
+        const mat4 GetMatrix() const;
 
-        Transform GetInverse() const { return Transform(glm::inverse(GetMatrix())); }
-        void Decompose(vec3 &translateOut, quat &rotateOut, vec3 &scaleOut)const
-            { Decompose(GetMatrix(), translateOut, rotateOut, scaleOut); }
+        Transform GetInverse() const;
 
-        vec3 operator*(const vec3& v) const { auto v4 = mTransform * vec4(v.x, v.y, v.z, 1); return vec3(v4.x/v4.w, v4.y/v4.w, v4.z/v4.w); }
+        vec3 operator*(const vec3& v) const { return mRotation * v + mTranslation; }
 
-        Transform operator*(const Transform& other) const { return Transform(mTransform * other.mTransform); }
+        Transform operator*(const Transform& other) const { return Transform(mTranslation + mRotation * other.mTranslation, mRotation * other.mRotation); }
 
-
+        const quat &GetRotation() const { return mRotation; }
+        const vec3 &GetTranslation() const { return mTranslation; }
 
     private:
+
         static void Decompose(const mat4 &transform, vec3 &translateOut, quat &rotateOut, vec3 &scaleOut);
 
-        mat4 mTransform;
+        quat mRotation;
+        vec3 mTranslation;
 
     };
 };

@@ -20,19 +20,15 @@ namespace skellington {
         return glm::translate(translation) * glm::mat4_cast(rotation) * glm::scale(scale);
     }
 
-    Transform::Transform(const vec3 &translation, const quat &rotation, const vec3& scale)
-    : mTransform(MakeFrameMatrix(translation, rotation, scale))
+    Transform::Transform(const mat4 &transform)
     {
-
+        vec3 scale;
+        Decompose(transform, mTranslation, mRotation, scale);
     }
 
-    vec3 Transform::GetTranslationComponent() const
+    const mat4 Transform::GetMatrix() const
     {
-        vec3 translate;
-        quat rotate;
-        vec3 scale;
-        Decompose(mTransform, translate, rotate, scale);
-        return translate;
+        return glm::translate(mTranslation) * glm::mat4_cast(mRotation);
     }
 
     void Transform::Decompose(const mat4 &transform, vec3 &translateOut, quat &rotateOut, vec3 &scaleOut)
@@ -41,6 +37,12 @@ namespace skellington {
         vec4 perspective;
         decompose(transform, scaleOut, rotateOut, translateOut, skew, perspective);
         rotateOut = conjugate(rotateOut);
+    }
+
+    Transform Transform::GetInverse() const
+    {
+        auto rT = glm::transpose(glm::mat3_cast(mRotation));
+        return Transform(-rT * mTranslation, glm::quat_cast(rT));
     }
 
 

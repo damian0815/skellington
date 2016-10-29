@@ -46,7 +46,8 @@ namespace skellington
         string currentJointName = jointName;
         while(true)
         {
-            transformStack.push_front(GetJoint(currentJointName).GetParentRelativeRestTransform());
+            const auto& jParentRestTransform = GetJoint(currentJointName).GetParentRelativeRestTransform();
+            transformStack.push_front(jParentRestTransform);
             if (!JointHasParent(currentJointName)) {
                 break;
             }
