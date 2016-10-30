@@ -9,6 +9,9 @@ namespace skellington
 {
     namespace MeshSkeletonAnimator
     {
+        vec3 GetTransformedPos(const vec3 &v, const vec3 &restCoR, const vec3 &posedCoR, const quat &offsetRotation)
+        { return posedCoR + offsetRotation * (v - restCoR); }
+
         Mesh ApplyPose_Linear(const Pose &pose, const Mesh *meshRest)
         {
             vector<vec3> posedVertices(meshRest->GetVertices().size());
@@ -27,7 +30,7 @@ namespace skellington
                 for (const auto& wv: it.second) {
                     const auto& restPos = meshRest->GetVertices()[wv.mVertexIndex];
 
-                    auto transformedPos = posedCoR + offsetRotation * (restPos - restCoR);
+                    auto transformedPos = GetTransformedPos(restPos, restCoR, posedCoR, offsetRotation);
                     posedVertices[wv.mVertexIndex] += wv.mWeight * transformedPos;
                 }
             }
@@ -44,82 +47,58 @@ namespace skellington
 
             const auto& skeleton = *pose.GetSkeleton();
 
-            /*
+
             map<string, vec3> restJointCoRs;
+            map<string, vec3> posedJointCoRs;
             map<string, quat> offsetRotations;
             for (const auto& j: skeleton.GetJoints()) {
+                const auto& name = j.GetName();
                 auto restTransform = skeleton.GetAbsoluteTransform(name);
                 auto posedTransform = pose.GetAbsoluteTransform(name);
 
                 auto restCoR = restTransform.GetTranslation();
                 auto posedCoR = posedTransform.GetTranslation();
-                auto offsetRotation = posedTransform.GetRotation() * glm::inverse(restTransform.GetRotation());*/
+                auto offsetRotation = posedTransform.GetRotation() * glm::inverse(restTransform.GetRotation());
 
-            map<string, glm::quat> unitRotationQuats;
-            map<string, vec3> translations;
-            map<string, Transform> inverseRestTransforms;
-            for (const auto& j: skeleton.GetJoints()) {
-                const auto poseTransform = pose.GetAbsoluteTransform(j.GetName());
-
-                unitRotationQuats[j.GetName()] = glm::normalize(poseTransform.GetRotation());
-                translations[j.GetName()] = poseTransform.GetTranslation();
-
-                inverseRestTransforms[j.GetName()] = skeleton.GetAbsoluteTransform(j.GetName()).GetInverse();
+                restJointCoRs[name] = restCoR;
+                posedJointCoRs[name] = posedCoR;
+                offsetRotations[name] = offsetRotation;
             }
 
 
-            vector<quat> rotations;
-            rotations.assign(numVertices, quat(0,0,0,0));
-            for (const auto& it: meshRest->GetVertexGroups()) {
-                const auto& groupName = it.first;
-                const auto& qi = unitRotationQuats.at(groupName);
-                for (const auto& wv: it.second) {
-                    //rotations[wv.mVertexIndex] = AntipodalityAwareAdd(rotations[wv.mVertexIndex], wv.mWeight * qi);
-                    rotations[wv.mVertexIndex] += wv.mWeight * qi;
-
-                }
-            }
-
-
-            vector<vec3> corT(numVertices);
-            for (const auto& it: meshRest->GetVertexGroups()) {
-                const auto& groupName = it.first;
-                const auto& lbsR = unitRotationQuats[groupName];
-                const auto& lbsT = translations[groupName];
-                 for (const auto& wv: it.second) {
-                    if (!optimizedCoMs.count(wv.mVertexIndex)) {
-                        continue;
-                    }
-                    auto pi = optimizedCoMs.at(wv.mVertexIndex);
-                    corT[wv.mVertexIndex] += wv.mWeight * ((lbsR * (inverseRestTransforms[groupName] * pi)) + lbsT);
-                }
-            }
 
             vector<vec3> posedVertices(numVertices);
-
-
+            vector<vec3> optimizedCoRPosed(numVertices);
+            vector<quat> optimizedOffsetRotations;
+            optimizedOffsetRotations.assign(numVertices, quat(0,0,0,0));
             for (const auto& it: meshRest->GetVertexGroups()) {
                 const auto& groupName = it.first;
-                const auto& lbsR = unitRotationQuats[groupName];
-                const auto& lbsT = translations[groupName];
+                const auto& restCoR = restJointCoRs[groupName];
+                const auto& posedCoR = posedJointCoRs[groupName];
+                const auto& offsetRotation = offsetRotations[groupName];
                 for (const auto& wv: it.second) {
-                    auto restV = meshRest->GetVertices()[wv.mVertexIndex];
-                    if (!optimizedCoMs.count(wv.mVertexIndex)) {
-                        posedVertices[wv.mVertexIndex] += wv.mWeight * ((lbsR * (inverseRestTransforms[groupName] * restV)) + lbsT);
+                    if (optimizedCoMs.count(wv.mVertexIndex)) {
+                        const auto &optimizedCoRRest = optimizedCoMs.at(wv.mVertexIndex);
+                        optimizedCoRPosed[wv.mVertexIndex] += wv.mWeight * GetTransformedPos(optimizedCoRRest, restCoR, posedCoR, offsetRotation);
+
+                        optimizedOffsetRotations[wv.mVertexIndex] = AntipodalityAwareAdd(optimizedOffsetRotations[wv.mVertexIndex], wv.mWeight * offsetRotation);
+                        //optimizedOffsetRotations[wv.mVertexIndex] += wv.mWeight * offsetRotation;
+                    } else {
+                        const auto& restV = meshRest->GetVertices()[wv.mVertexIndex];
+                        posedVertices[wv.mVertexIndex] += wv.mWeight * GetTransformedPos(restV, restCoR, posedCoR, offsetRotation);
                     }
                 }
             }
+
             for (int i=0; i<numVertices; i++) {
                 if (optimizedCoMs.count(i)) {
                     auto restV = meshRest->GetVertices()[i];
-                    auto R = glm::normalize(rotations[i]);
-                    auto pi = optimizedCoMs.at(i);
 
-                    auto t = corT[i] - (R * pi);
+                    const auto& restCoR = optimizedCoMs.at(i);
+                    const auto& posedCoR = optimizedCoRPosed[i];
+                    auto offsetRotation = glm::normalize(optimizedOffsetRotations[i]);
 
-                    auto vDash = (R * restV) + t;
-
-                    posedVertices[i] = vDash;
+                    posedVertices[i] = GetTransformedPos(restV, restCoR, posedCoR, offsetRotation);
                 }
             }
 

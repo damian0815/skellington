@@ -6,7 +6,8 @@
 #define SKELLINGTON_SKELLINGTONTESTUTILS_H
 
 #include "OpenGLTestUtils.h"
-#include "skellington/Skeleton.h"
+#include <skellington/Skeleton.h>
+#include <skellington/Pose.h>
 #include <fmt/ostream.h>
 #include <glm/gtc/quaternion.hpp>
 

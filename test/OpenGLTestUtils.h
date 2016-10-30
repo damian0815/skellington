@@ -19,6 +19,7 @@
 #include <sstream>
 #include <numeric>
 
+using glm::vec2;
 using glm::vec3;
 using glm::vec4;
 using std::cerr;
@@ -121,12 +122,13 @@ inline GLFWwindow* InitOpenGL(float width, float height) {
     return window;
 }
 
+inline void OpenGLMainLoop(vec2 windowSize, std::function<void(void)> frameFunction, GLFWkeyfun keyFunction=nullptr) {
 
-inline void OpenGLMainLoop(std::function<void(void)> frameFunction) {
+    auto window = InitOpenGL(windowSize.x, windowSize.y);
 
-    const float width = 500;
-    const float height = 500;
-    auto window = InitOpenGL(width, height);
+    if (keyFunction != nullptr) {
+        glfwSetKeyCallback(window, keyFunction);
+    }
 
     while (!glfwWindowShouldClose(window)) {
         SetupOpenGLMatrices(window);
@@ -139,23 +141,22 @@ inline void OpenGLMainLoop(std::function<void(void)> frameFunction) {
     }
 }
 
-
-inline void OpenGLRotatingMainLoop(vec3 camPos, float rotateSpeed, std::function<void(void)> frameFunction)
+inline void OpenGLRotatingMainLoop(vec2 windowSize, vec3 camPos, float rotateSpeed, std::function<void(void)> frameFunction, GLFWkeyfun keyFunction = nullptr)
 {
     float camAngle = 0;
-    OpenGLMainLoop([&]() {
+    OpenGLMainLoop(windowSize, [&]() {
         camAngle += rotateSpeed;
 
         glTranslatef(camPos);
 
         glRotatef(camAngle, 0, 1, 0);
         frameFunction();
-    });
+    }, keyFunction);
 }
 
-inline void OpenGLRotatingMainLoop(float camDistance, float rotateSpeed, std::function<void(void)> frameFunction)
+inline void OpenGLRotatingMainLoop(vec2 windowSize, float camDistance, float rotateSpeed, std::function<void(void)> frameFunction, GLFWkeyfun keyFunction=nullptr)
 {
-    OpenGLRotatingMainLoop(vec3(0, 0, -camDistance), rotateSpeed, frameFunction);
+    OpenGLRotatingMainLoop(windowSize, vec3(0, 0, -camDistance), rotateSpeed, frameFunction, keyFunction);
 }
 
 inline std::ostream &operator<<(std::ostream &os, const vec3 &v)
