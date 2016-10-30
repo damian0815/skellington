@@ -32,11 +32,17 @@ namespace skellington
         // in 'world' space
         Transform GetAbsoluteTransform(const string &jointName) const;
 
+        // returns the center of rotation for the given joint in world space
+        vec3 GetAbsoluteTranslation(const string& jointName) const;
+        // returns the rotation to be applied around the center of rotation in world space
+        quat GetAbsoluteOffsetRotation(const string &jointName) const;
+
     private:
         const Skeleton* mSkeleton;
 
         map<string, Transform> mJointOffsetTransforms;
 
+        vec3 GetParentRelativeTranslation(const string &basic_string) const;
     };
 
 }

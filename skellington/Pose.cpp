@@ -16,6 +16,25 @@ namespace skellington
        return mSkeleton->GetJoint(jointName).GetParentRelativeRestTransform() * GetOffsetTransform(jointName);
     }
 
+    vec3 Pose::GetAbsoluteTranslation(const string &jointName) const
+    {
+        vec3 translation;
+        if (mSkeleton->JointHasParent(jointName)) {
+            translation = GetAbsoluteTranslation(mSkeleton->GetParentJointName(jointName));
+        }
+        auto parentRelativeTranslation = mSkeleton->GetJoint(jointName).GetParentRelativeRestTransform().GetTranslation();
+        return translation + parentRelativeTranslation;
+    }
+
+    quat Pose::GetAbsoluteOffsetRotation(const string &jointName) const
+    {
+        quat parentRotation;
+        if (mSkeleton->JointHasParent(jointName)) {
+            parentRotation = GetAbsoluteOffsetRotation(mSkeleton->GetParentJointName(jointName));
+        }
+        return parentRotation * mJointOffsetTransforms.at(jointName).GetRotation();
+    }
+
     Transform Pose::GetAbsoluteTransform(const string &jointName)const
     {
         Transform parentTransform;
@@ -33,6 +52,8 @@ namespace skellington
         }
         return Transform::IDENTITY;
     }
+
+
 
 
 };

@@ -110,7 +110,7 @@ inline GLFWwindow* InitOpenGL(float width, float height) {
         return nullptr;
     }
 
-    auto window = glfwCreateWindow(width, height, "TetraIntersectTest", NULL, NULL);
+    auto window = glfwCreateWindow(width, height, "OpenGL Test Window", NULL, NULL);
     if (window == nullptr) {
         glfwTerminate();
         cerr << "Couldn't create window" << endl;
