@@ -112,10 +112,10 @@ int main()
 
         vec4 optimizedCoRColor(1, 0.2f, 0.2f, 0.8f);
         for (const auto it: optimizedCoRs) {
-            //auto v1 = posedMesh_OptimizedCoR.GetVertices()[it.first];
-            //auto v2 = optimizedCoRsPosed.at(it.first);
+            auto v1 = optimizedCoRsPosed.at((size_t)it.first);
+            DrawPoint(v1, optimizedCoRColor);
+            //auto v2 = posedMesh_OptimizedCoR.GetVertices()[it.first];
             //DrawLine(v1, v2, optimizedCoRColor);
-            DrawPoint(optimizedCoRsPosed.at(it.first), optimizedCoRColor);
         }
 
         text->RenderLabel(fmt::format("Twist: {0:>4}  Curl: {1:>4}", int(twistAngle*180/M_PI), int(curlAngle*180/M_PI)).c_str(), 10, int(WINDOW_SIZE.y-40));
