@@ -22,7 +22,8 @@ namespace skellington
     namespace OptimizedCoRComputer
     {
 
-        map<int, vec3> ComputeOptimizedCoRs(skellington::Mesh *mesh, skellington::Skeleton *skeleton);
+        map<int, vec3>
+        ComputeOptimizedCoRs(skellington::Mesh *mesh, skellington::Skeleton *skeleton, float subdivisionEpsilon=0.1f, float similaritySigma=0.1f);
     }
 }
 

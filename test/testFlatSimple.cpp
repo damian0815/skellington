@@ -100,7 +100,7 @@ int main()
         mesh->AddVertexGroup("B", groupBWeights);
     }
 
-    auto optimizedCoRs = OptimizedCoRComputer::ComputeOptimizedCoRs(mesh, skeleton);
+    auto optimizedCoRs = OptimizedCoRComputer::ComputeOptimizedCoRs(mesh, skeleton, 0, 0);
 
 
     Pose pose(skeleton);

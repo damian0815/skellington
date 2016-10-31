@@ -39,7 +39,7 @@ void KeyFunction(GLFWwindow* window, int key, int scancode, int action, int mods
 
 int main()
 {
-    string path = "data/ArmatureStraight.dae";
+    string path = "data/ArmatureForkedComplex.dae";
 
     Mesh* mesh;
     Skeleton* skeleton;
@@ -49,7 +49,8 @@ int main()
         return 1;
     }
 
-    auto optimizedCoRs = OptimizedCoRComputer::ComputeOptimizedCoRs(mesh, skeleton);
+    const float subdivisionEpsilon = 10.0f;
+    auto optimizedCoRs = OptimizedCoRComputer::ComputeOptimizedCoRs(mesh, skeleton, subdivisionEpsilon);
 
 
     Pose pose(skeleton);

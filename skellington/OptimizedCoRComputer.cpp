@@ -72,11 +72,9 @@ namespace skellington
 
         vector<TriangleCentroidData> PrecalculateTriangleData(const vector<vec3> &vertices, const vector<TriangleIndices> &triangles, const vector<BoneWeightMap> &weightsPerVertex);
 
-        map<int, vec3> ComputeOptimizedCoRs(skellington::Mesh *mesh, skellington::Skeleton *skeleton)
+        map<int, vec3>
+        ComputeOptimizedCoRs(skellington::Mesh *mesh, skellington::Skeleton *skeleton, float subdivisionEpsilon, float similaritySigma)
         {
-            const float sigma = 0.1f;
-            const float epsilon = 0.1f;
-
             vector<TriangleIndices> triangles(mesh->GetTriangles().size());
             for (int triangleIndex=0; triangleIndex<mesh->GetTriangles().size()/3; triangleIndex++) {
                 triangles[triangleIndex].alpha = mesh->GetTriangles()[triangleIndex*3+0];
@@ -96,25 +94,26 @@ namespace skellington
                 ++boneIndex;
             }
 
-            auto subdividedMesh = SubdivideMesh(mesh->GetVertices(), triangles, boneWeights, epsilon);
+            auto subdividedMesh = SubdivideMesh(mesh->GetVertices(), triangles, boneWeights, subdivisionEpsilon);
             auto triangleData = PrecalculateTriangleData(subdividedMesh.vertices, subdividedMesh.triangles, subdividedMesh.boneWeightsPerVertex);
 
             map<int, vec3> results;
-            fmt::print("Computing optimized centers of rotation for {0} vertices in {1} triangles, subdivided to {2} vertices in {3} triangles, over {4} bones...\n", mesh->GetVertices().size(), triangles.size(), subdividedMesh.vertices.size(), subdividedMesh.triangles.size(), boneIndex);
-            for (int i=0; i<mesh->GetVertices().size(); i++) {
-                if (i % (mesh->GetVertices().size() / 40) == 0) {
-                    float pct = float(i)/float(mesh->GetVertices().size());
+            int numUnsubdividedVertices = mesh->GetVertices().size();
+            fmt::print("Computing optimized centers of rotation for {0} vertices in {1} triangles, subdivided to {2} vertices in {3} triangles, over {4} bones...\n", numUnsubdividedVertices, triangles.size(), subdividedMesh.vertices.size(), subdividedMesh.triangles.size(), boneIndex);
+
+            for (int i=0; i<numUnsubdividedVertices; i++) {
+                if (i % (numUnsubdividedVertices / 40) == 0) {
+                    float pct = float(i)/float(numUnsubdividedVertices);
                     fmt::print("{0}%\n", pct*100);
                 }
                 vec3 cor;
-                bool hasCoR = ComputeOptimizedCoR(i, subdividedMesh.vertices, subdividedMesh.boneWeightsPerVertex, triangleData, sigma, cor);
+                bool hasCoR = ComputeOptimizedCoR(i, subdividedMesh.vertices, subdividedMesh.boneWeightsPerVertex, triangleData, similaritySigma, cor);
                 if (hasCoR) {
                     results[i] = cor;
                 }
             }
 
             return results;
-
         }
 
 
