@@ -22,6 +22,7 @@ endfunction()
 make_test_app(testLoad test/testLoad.cpp)
 make_test_app(testAnimateLinear test/testAnimateLinear.cpp)
 make_test_app(testOptimizedCentersOfRotation test/testOptimizedCentersOfRotation.cpp)
+make_test_app(testFlatSimple test/testFlatSimple.cpp)
 
 file(GLOB DATA_FILES "data/*")
 #make_directory(${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/data)

@@ -1,3 +1,7 @@
+//
+// Created by Damian Stewart on 31/10/2016.
+//
+
 #include <iostream>
 
 #include <skellington/Pose.h>
@@ -39,14 +43,61 @@ void KeyFunction(GLFWwindow* window, int key, int scancode, int action, int mods
 
 int main()
 {
-    string path = "data/ArmatureStraight.dae";
+    string path = "data/ArmatureFlatSimple.dae";
 
-    Mesh* mesh;
+    Mesh* dummyMesh;
     Skeleton* skeleton;
 
-    bool loaded = AssimpLoader::Load(path, &mesh, &skeleton);
+    bool loaded = AssimpLoader::Load(path, &dummyMesh, &skeleton);
     if (!loaded) {
         return 1;
+    }
+
+    Mesh* mesh;
+    {
+        std::vector<vec3> vertices;
+        std::vector<int> triangles;
+        const float y = 0;
+        for (int i = 0; i < 6; i++) {
+            float z = i * 0.4f;
+            for (int j = 0; j < 2; j++) {
+                float x = 0.6f * j - 0.3f;
+                vertices.push_back(vec3(x, y, z));
+            }
+        }
+
+        for (int i=0; i<5; i++) {
+            int bl = i*2;
+            int br = bl + 1;
+            int tl = (i+1)*2;
+            int tr = tl + 1;
+            triangles.push_back(bl);
+            triangles.push_back(tl);
+            triangles.push_back(br);
+
+            triangles.push_back(tl);
+            triangles.push_back(tr);
+            triangles.push_back(br);
+        }
+
+        mesh = new Mesh(vertices, triangles);
+
+        vector<Mesh::WeightedVectorIndex> groupAWeights;
+        vector<Mesh::WeightedVectorIndex> groupBWeights;
+        groupAWeights.push_back({0, 1});
+        groupAWeights.push_back({1, 1});
+        groupAWeights.push_back({2, 1});
+        groupAWeights.push_back({3, 1});
+        groupAWeights.push_back({4, 0.667f});
+        groupAWeights.push_back({5, 0.667f});
+        groupAWeights.push_back({6, 0.333f});
+        groupAWeights.push_back({7, 0.333f});
+        for (const auto& wv: groupAWeights) {
+            groupBWeights.push_back({11 - wv.mVertexIndex, wv.mWeight});
+        }
+
+        mesh->AddVertexGroup("A", groupAWeights);
+        mesh->AddVertexGroup("B", groupBWeights);
     }
 
     auto optimizedCoRs = OptimizedCoRComputer::ComputeOptimizedCoRs(mesh, skeleton);
@@ -61,30 +112,13 @@ int main()
     float alpha = 0;
     const float ALPHA_SPEED = 0.005f;
 
-    SimpleText* text = nullptr;
-
     OpenGLRotatingMainLoop(WINDOW_SIZE, CAM_POS, ROTATE_SPEED, [&]() {
-
-        if (text == nullptr) {
-            text = new SimpleText();
-            text->SetTextSize(SimpleText::SIZE_32);
-            //text->EnableBlending(true);
-            text->SetColor(SimpleText::TEXT_COLOR, SimpleText::WHITE, SimpleText::NORMAL);
-        }
 
         alpha += ALPHA_SPEED;
         const auto curlAngle = (curlActive ? (float(M_PI * 0.63f) * sinf(alpha)) : 0);
         auto curlZ = Transform::MakeRotation(curlAngle, vec3(0, 0, 1));
-        auto curlX = Transform::MakeRotation(curlAngle, vec3(1, 0, 0));
 
-        auto twistAngle = (twistActive ? float(M_PI) * sinf(alpha / 1.5f) : 0);
-        auto twist = Transform::MakeRotation(twistAngle, vec3(0, 1, 0));
-
-        pose.SetOffsetTransform("A", curlZ);
-        pose.SetOffsetTransform("B", curlZ*twist);
-        pose.SetOffsetTransform("C", curlZ*twist);
-        pose.SetOffsetTransform("D", curlX);
-        pose.SetOffsetTransform("E", curlX*twist);
+        pose.SetOffsetTransform("B", curlZ);
 
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -96,7 +130,9 @@ int main()
         DrawPosedSkeleton(skeleton, pose);
 
         glColor4f(1,1,1,0.2f);
+        vec4 optimizedCoRColor(1, 0.2f, 0.2f, 0.3f);
         //mesh->DrawWireframe();
+
 
         auto posedMesh_Linear = MeshSkeletonAnimator::ApplyPose_Linear(pose, mesh);
 
@@ -110,18 +146,11 @@ int main()
         glTranslatef(3, 0, 0);
         posedMesh_OptimizedCoR.DrawWireframe();
 
-        vec4 optimizedCoRColor(1, 0.2f, 0.2f, 0.8f);
         for (const auto it: optimizedCoRs) {
-            //auto v1 = posedMesh_OptimizedCoR.GetVertices()[it.first];
-            //auto v2 = optimizedCoRsPosed.at(it.first);
-            //DrawLine(v1, v2, optimizedCoRColor);
-            DrawPoint(optimizedCoRsPosed.at(it.first), optimizedCoRColor);
+            auto v1 = posedMesh_OptimizedCoR.GetVertices()[it.first];
+            auto v2 = optimizedCoRsPosed.at(it.first);
+            DrawLine(v1, v2, optimizedCoRColor);
         }
-
-        text->RenderLabel(fmt::format("Twist: {0:>4}  Curl: {1:>4}", int(twistAngle*180/M_PI), int(curlAngle*180/M_PI)).c_str(), 10, int(WINDOW_SIZE.y-40));
-
-        text->RenderLabel("Linear Blend", int(WINDOW_SIZE.x/4)-(16*6), 10);
-        text->RenderLabel("Optimized Centers of Rotation", int(3*WINDOW_SIZE.x/4)-(16*13), 10);
 
         glPopMatrix();
 

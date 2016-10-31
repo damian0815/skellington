@@ -89,16 +89,13 @@ namespace skellington
             const float sigmaSq = sigma*sigma;
 
             for (int j=0; j<wP.size(); j++) {
-                for (int k=0; k<wV.size(); k++) {
-                    if (j==k) {
-                        continue;
-                    }
+                for (int k=j+1; k<wV.size(); k++) {
                     auto wPj = wP.at(j);
                     auto wPk = wP.at(k);
                     auto wVj = wV.at(j);
                     auto wVk = wV.at(k);
 
-                    similarity += wPj*wPk*wVj*wVk * std::exp(-(std::pow(wPj*wVk - wPk-wVj, 2))/sigmaSq);
+                    similarity += wPj*wPk*wVj*wVk * std::exp(-(std::pow(wPj*wVk - wPk*wVj, 2))/sigmaSq);
                 }
             }
 
@@ -123,9 +120,9 @@ namespace skellington
                     result.at(j) += boneWeights.at(vertexIndex).at(j);
                 }
             }
-            const float ONE_THIRD = 1.0f/3.0f;
+
             for (auto& w: result) {
-                w *= ONE_THIRD;
+                w /= 3.0f;
             }
             return result;
         }

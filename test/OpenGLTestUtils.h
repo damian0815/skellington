@@ -51,10 +51,18 @@ inline void glColor4f(const vec4 &c)
     glColor4f(c.r, c.g, c.b, c.a);
 }
 
+inline void DrawPoint(const vec3& v, const vec4 &color)
+{
+    glBegin(GL_POINTS);
+    glColor4f(color);
+    glVertex3f(v);
+    glEnd();
+}
+
 inline void DrawLine(const vec3 &v1, const vec3 &v2, const vec4 &color)
 {
-    glColor4f(color);
     glBegin(GL_LINES);
+    glColor4f(color);
     glVertex3f(v1);
     glVertex3f(v2);
     glEnd();

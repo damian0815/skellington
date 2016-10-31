@@ -10,7 +10,9 @@ namespace skellington
     namespace MeshSkeletonAnimator
     {
         vec3 GetTransformedPos(const vec3 &v, const vec3 &restCoR, const vec3 &posedCoR, const quat &offsetRotation)
-        { return posedCoR + offsetRotation * (v - restCoR); }
+        {
+            return posedCoR + offsetRotation * (v - restCoR);
+        }
 
         Mesh ApplyPose_Linear(const Pose &pose, const Mesh *meshRest)
         {
@@ -41,7 +43,7 @@ namespace skellington
 
         quat AntipodalityAwareAdd(const quat &q1, const quat &q2);
 
-        Mesh ApplyPose_OptimizedCoR(const Pose &pose, const Mesh *meshRest, const map<int, vec3> optimizedCoMs)
+        Mesh ApplyPose_OptimizedCoR(const Pose &pose, const Mesh *meshRest, const map<int, vec3> &optimizedCoRs, vector<vec3> &optimizedCoRsPosedOut)
         {
             const auto numVertices = meshRest->GetVertices().size();
 
@@ -68,7 +70,7 @@ namespace skellington
 
 
             vector<vec3> posedVertices(numVertices);
-            vector<vec3> optimizedCoRPosed(numVertices);
+            vector<vec3> optimizedCoRsPosed(numVertices);
             vector<quat> optimizedOffsetRotations;
             optimizedOffsetRotations.assign(numVertices, quat(0,0,0,0));
             for (const auto& it: meshRest->GetVertexGroups()) {
@@ -77,9 +79,9 @@ namespace skellington
                 const auto& posedCoR = posedJointCoRs[groupName];
                 const auto& offsetRotation = offsetRotations[groupName];
                 for (const auto& wv: it.second) {
-                    if (optimizedCoMs.count(wv.mVertexIndex)) {
-                        const auto &optimizedCoRRest = optimizedCoMs.at(wv.mVertexIndex);
-                        optimizedCoRPosed[wv.mVertexIndex] += wv.mWeight * GetTransformedPos(optimizedCoRRest, restCoR, posedCoR, offsetRotation);
+                    if (optimizedCoRs.count(wv.mVertexIndex)) {
+                        const auto &optimizedCoRRest = optimizedCoRs.at(wv.mVertexIndex);
+                        optimizedCoRsPosed[wv.mVertexIndex] += wv.mWeight * GetTransformedPos(optimizedCoRRest, restCoR, posedCoR, offsetRotation);
 
                         optimizedOffsetRotations[wv.mVertexIndex] = AntipodalityAwareAdd(optimizedOffsetRotations[wv.mVertexIndex], wv.mWeight * offsetRotation);
                         //optimizedOffsetRotations[wv.mVertexIndex] += wv.mWeight * offsetRotation;
@@ -89,13 +91,14 @@ namespace skellington
                     }
                 }
             }
+            optimizedCoRsPosedOut = optimizedCoRsPosed;
 
             for (int i=0; i<numVertices; i++) {
-                if (optimizedCoMs.count(i)) {
+                if (optimizedCoRs.count(i)) {
                     auto restV = meshRest->GetVertices()[i];
 
-                    const auto& restCoR = optimizedCoMs.at(i);
-                    const auto& posedCoR = optimizedCoRPosed[i];
+                    const auto& restCoR = optimizedCoRs.at(i);
+                    const auto& posedCoR = optimizedCoRsPosed[i];
                     auto offsetRotation = glm::normalize(optimizedOffsetRotations[i]);
 
                     posedVertices[i] = GetTransformedPos(restV, restCoR, posedCoR, offsetRotation);
