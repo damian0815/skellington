@@ -25,12 +25,13 @@ int main()
 
     Pose pose(skeleton);
 
+	const vec2 WINDOW_SIZE(500,500);
     const vec3 CAM_POS(0, -1, -5);
     const float ROTATE_SPEED = 0.1;
     float alpha = 0;
     const float ALPHA_SPEED = 0.01f;
 
-    OpenGLRotatingMainLoop(CAM_POS, ROTATE_SPEED, [&]() {
+    OpenGLRotatingMainLoop(WINDOW_SIZE, CAM_POS, ROTATE_SPEED, [&]() {
 
         alpha += ALPHA_SPEED;
         Transform curl = Transform::MakeRotation(float(M_PI_4)*(1.0f - cosf(alpha/2)), vec3(1,0,0));

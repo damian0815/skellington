@@ -49,7 +49,7 @@ int main()
         return 1;
     }
 
-    const float subdivisionEpsilon = 10.0f;
+    const float subdivisionEpsilon = 0.1f;
     auto optimizedCoRs = OptimizedCoRComputer::ComputeOptimizedCoRs(mesh, skeleton, subdivisionEpsilon);
 
 
