@@ -39,7 +39,7 @@ void KeyFunction(GLFWwindow* window, int key, int scancode, int action, int mods
 
 int main()
 {
-    string path = "data/ArmatureForkedComplex.dae";
+    string path = "data/ArmatureStraight.dae";
 
     Mesh* mesh;
     Skeleton* skeleton;
