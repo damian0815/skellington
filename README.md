@@ -11,3 +11,6 @@ ccmake .
 make
 ./testOptimizedCentersOfRotation
 ```
+
+![animated gif of testOptimizedCentersOfRotation](https://media.giphy.com/media/11m3RYQpBj0R5C/giphy.gif)
+
